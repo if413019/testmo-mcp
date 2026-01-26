@@ -5,6 +5,7 @@ Model Context Protocol server for Testmo test case management.
 Provides tools for AI assistants to manage test cases, folders, and projects.
 """
 
+import argparse
 import asyncio
 import os
 import sys
@@ -21,8 +22,29 @@ from mcp_testmo.config import FIELD_MAPPINGS
 from mcp_testmo.tools import get_all_tools, get_handler
 from mcp_testmo.utils import format_error, format_result
 
-# Load environment variables
-load_dotenv()
+
+def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="MCP server for Testmo test case management"
+    )
+    parser.add_argument(
+        "--env-file",
+        type=str,
+        help="Path to .env file with TESTMO_URL and TESTMO_API_KEY",
+    )
+    return parser.parse_args()
+
+
+def _load_environment(env_file: str | None = None) -> None:
+    """Load environment variables from .env file."""
+    if env_file:
+        if not os.path.exists(env_file):
+            print(f"Error: Env file not found: {env_file}", file=sys.stderr)
+            sys.exit(1)
+        load_dotenv(env_file)
+    else:
+        load_dotenv()
 
 # Initialize MCP server
 server = Server("mcp-testmo")
@@ -89,6 +111,10 @@ TOOLS = get_all_tools()
 
 def main() -> None:
     """Main entry point for the MCP server."""
+    # Parse arguments and load environment
+    args = _parse_args()
+    _load_environment(args.env_file)
+
     # Check for required environment variables
     if not os.environ.get("TESTMO_URL"):
         print(
