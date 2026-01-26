@@ -49,7 +49,7 @@ src/mcp_testmo/
 - `TestmoClient` uses async context manager (`async with`) for HTTP lifecycle
 - Global client instance is lazy-initialized in server
 - Tools are defined in `TOOLS` list with JSON Schema input validation
-- Field mappings (FIELD_MAPPINGS dict) contain Nanovest-specific Testmo configuration IDs
+- Field mappings (FIELD_MAPPINGS dict) contain example Testmo configuration IDs (customize for your instance)
 
 **Request flow:**
 1. MCP server receives tool call via stdio

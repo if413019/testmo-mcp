@@ -133,10 +133,10 @@ Add to your project's `.mcp.json`:
 
 ## Field Mappings
 
-The server includes built-in mappings for Nanovest's Testmo configuration:
+The server includes example field mappings (customize these for your Testmo instance):
 
 ### Projects
-- `nanovest`: 2
+- `your-project`: 2
 - `playground`: 6
 
 ### Priority (`custom_priority`)
@@ -192,7 +192,7 @@ Use testmo_create_case with project_id=6 and case_data containing:
 - custom_milestone_id: "release/5.2.0"
 - custom_references: "IUG-1169"
 - custom_issues_tags_and_configurations_added: 66 (Yes)
-- custom_confluence_url: "https://nanovest.atlassian.net/wiki/..."
+- custom_confluence_url: "https://your-instance.atlassian.net/wiki/..."
 - custom_feature: "<pre><code class='editor-gherkin'>...</code></pre>"
 - configurations: [5] (iOS & Android)
 - tags: ["services-usergrowth", "e2e", "regression"]

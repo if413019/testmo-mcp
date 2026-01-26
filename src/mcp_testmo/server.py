@@ -81,7 +81,7 @@ TOOLS = [
             "properties": {
                 "project_id": {
                     "type": "integer",
-                    "description": "The project ID (e.g., 2 for 'nanovest', 6 for 'playground')",
+                    "description": "The project ID",
                 },
             },
             "required": ["project_id"],
@@ -550,7 +550,7 @@ Use this to understand correct field values before creating/updating test cases.
 
 FIELD_MAPPINGS = {
     "project_id": {
-        "nanovest": 2,
+        "example-project": 2,
         "playground": 6,
     },
     "custom_priority": {
@@ -794,7 +794,7 @@ def main() -> None:
             file=sys.stderr,
         )
         print(
-            "Set it to your Testmo instance URL (e.g., https://nanovest.testmo.net)",
+            "Set it to your Testmo instance URL (e.g., https://your-instance.testmo.net)",
             file=sys.stderr,
         )
         sys.exit(1)

@@ -64,7 +64,7 @@ class TestFieldMappings:
     def test_project_mappings(self):
         """Test project ID mappings."""
         assert "project_id" in FIELD_MAPPINGS
-        assert FIELD_MAPPINGS["project_id"]["nanovest"] == 2
+        assert FIELD_MAPPINGS["project_id"]["example-project"] == 2
         assert FIELD_MAPPINGS["project_id"]["playground"] == 6
 
     def test_priority_mappings(self):

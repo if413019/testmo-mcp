@@ -35,7 +35,7 @@ class TestmoClient:
             projects = await client.list_projects()
 
     Environment Variables:
-        TESTMO_URL: Base URL for Testmo instance (e.g., https://nanovest.testmo.net)
+        TESTMO_URL: Base URL for Testmo instance (e.g., https://your-instance.testmo.net)
         TESTMO_API_KEY: API token for authentication
     """
 

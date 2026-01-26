@@ -7,7 +7,7 @@ organizing test cases.
 """
 
 __version__ = "1.0.0"
-__author__ = "Nanovest QA Team"
+__author__ = "mcp-testmo contributors"
 
 from mcp_testmo.client import TestmoClient, TestmoAPIError
 
