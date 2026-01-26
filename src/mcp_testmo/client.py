@@ -246,14 +246,15 @@ class TestmoClient:
         Returns:
             Created folder object.
         """
-        data: dict[str, Any] = {"name": name}
+        folder_data: dict[str, Any] = {"name": name}
         if parent_id:
-            data["parent_id"] = parent_id
+            folder_data["parent_id"] = parent_id
 
         result = await self._request(
-            "POST", f"/projects/{project_id}/folders", data=data
+            "POST", f"/projects/{project_id}/folders", data={"folders": [folder_data]}
         )
-        return result.get("result", result)
+        folders = result.get("result", [])
+        return folders[0] if folders else result
 
     async def update_folder(
         self,
