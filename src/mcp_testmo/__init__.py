@@ -9,6 +9,6 @@ organizing test cases.
 __version__ = "1.0.0"
 __author__ = "mcp-testmo contributors"
 
-from mcp_testmo.client import TestmoClient, TestmoAPIError
+from mcp_testmo.client import TestmoAPIError, TestmoClient
 
 __all__ = ["TestmoClient", "TestmoAPIError", "__version__"]

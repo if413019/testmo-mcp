@@ -1,8 +1,7 @@
 """Tests for the MCP server."""
 
-import pytest
 
-from mcp_testmo.server import TOOLS, FIELD_MAPPINGS, format_error, format_result
+from mcp_testmo.server import FIELD_MAPPINGS, TOOLS, format_error, format_result
 
 
 class TestTools:
@@ -35,22 +34,70 @@ class TestTools:
         tool_names = [t.name for t in TOOLS]
 
         expected = [
+            # Projects
             "testmo_list_projects",
             "testmo_get_project",
+            # Folders
             "testmo_list_folders",
+            "testmo_get_folder",
             "testmo_create_folder",
+            "testmo_update_folder",
+            "testmo_delete_folder",
+            "testmo_find_folder_by_name",
+            # Milestones
+            "testmo_list_milestones",
+            "testmo_get_milestone",
+            # Test Cases
             "testmo_list_cases",
+            "testmo_get_all_cases",
             "testmo_get_case",
             "testmo_create_case",
             "testmo_create_cases",
+            "testmo_batch_create_cases",
             "testmo_update_case",
             "testmo_delete_case",
+            "testmo_batch_delete_cases",
             "testmo_search_cases",
+            # Test Runs
+            "testmo_list_runs",
+            "testmo_get_run",
+            # Run Results
+            "testmo_list_run_results",
+            # Attachments
+            "testmo_list_case_attachments",
+            "testmo_upload_case_attachment",
+            "testmo_delete_case_attachments",
+            # Automation Sources
+            "testmo_list_automation_sources",
+            "testmo_get_automation_source",
+            # Automation Runs
+            "testmo_list_automation_runs",
+            "testmo_get_automation_run",
+            # Utility
             "testmo_get_field_mappings",
+            "testmo_get_web_url",
         ]
 
         for expected_tool in expected:
             assert expected_tool in tool_names, f"Missing tool: {expected_tool}"
+
+    def test_new_tools_count(self):
+        """Test that we have all expected new tools."""
+        tool_names = [t.name for t in TOOLS]
+        # New tools added in this update
+        new_tools = [
+            "testmo_get_milestone",
+            "testmo_list_run_results",
+            "testmo_list_case_attachments",
+            "testmo_upload_case_attachment",
+            "testmo_delete_case_attachments",
+            "testmo_list_automation_sources",
+            "testmo_get_automation_source",
+            "testmo_list_automation_runs",
+            "testmo_get_automation_run",
+        ]
+        for tool in new_tools:
+            assert tool in tool_names, f"New tool missing: {tool}"
 
 
 class TestFieldMappings:
@@ -115,6 +162,25 @@ class TestFieldMappings:
         assert defaults["template_id"] == 4
         assert defaults["state_id"] == 1
         assert defaults["custom_creator"] == 51
+
+    def test_result_status_mappings(self):
+        """Test result status ID mappings."""
+        assert "result_status_id" in FIELD_MAPPINGS
+        statuses = FIELD_MAPPINGS["result_status_id"]
+        assert statuses["Untested"] == 1
+        assert statuses["Passed"] == 2
+        assert statuses["Failed"] == 3
+        assert statuses["Retest"] == 4
+        assert statuses["Blocked"] == 5
+        assert statuses["Skipped"] == 6
+
+    def test_automation_run_status_mappings(self):
+        """Test automation run status mappings."""
+        assert "automation_run_status" in FIELD_MAPPINGS
+        statuses = FIELD_MAPPINGS["automation_run_status"]
+        assert statuses["Success"] == 2
+        assert statuses["Failure"] == 3
+        assert statuses["Running"] == 4
 
 
 class TestFormatters:

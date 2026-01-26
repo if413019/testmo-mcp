@@ -332,34 +332,60 @@ class TestmoClient:
     # Milestones
     # =========================================================================
 
-    async def list_milestones(self, project_id: int) -> list[dict[str, Any]]:
+    async def list_milestones(
+        self,
+        project_id: int,
+        is_completed: bool | None = None,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
-        List all milestones in a project.
+        List milestones in a project.
 
         Args:
             project_id: The project ID.
+            is_completed: Filter by completion status.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
 
         Returns:
-            List of milestone objects.
+            Paginated list of milestone objects.
         """
-        result = await self._request("GET", f"/projects/{project_id}/milestones")
-        return result.get("result", [])
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if is_completed is not None:
+            params["is_completed"] = is_completed
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET", f"/projects/{project_id}/milestones", params=params
+        )
 
     async def get_milestone(
-        self, project_id: int, milestone_id: int
+        self,
+        milestone_id: int,
+        expands: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Get details of a specific milestone.
 
         Args:
-            project_id: The project ID.
             milestone_id: The milestone ID.
+            expands: Related entities to include.
 
         Returns:
             Milestone object with full details.
         """
+        params: dict[str, Any] = {}
+        if expands:
+            params["expands"] = ",".join(expands)
+
         result = await self._request(
-            "GET", f"/projects/{project_id}/milestones/{milestone_id}"
+            "GET",
+            f"/milestones/{milestone_id}",
+            params=params if params else None,
         )
         return result.get("result", result)
 
@@ -644,6 +670,9 @@ class TestmoClient:
         project_id: int,
         page: int = 1,
         per_page: int = 100,
+        is_closed: bool | None = None,
+        milestone_id: str | None = None,
+        expands: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         List test runs in a project.
@@ -652,29 +681,371 @@ class TestmoClient:
             project_id: The project ID.
             page: Page number.
             per_page: Results per page.
+            is_closed: Filter by closed status.
+            milestone_id: Comma-separated milestone IDs to filter by.
+            expands: Related entities to include.
 
         Returns:
             Paginated list of test runs.
         """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if is_closed is not None:
+            params["is_closed"] = is_closed
+        if milestone_id:
+            params["milestone_id"] = milestone_id
+        if expands:
+            params["expands"] = ",".join(expands)
+
         return await self._request(
             "GET",
             f"/projects/{project_id}/runs",
-            params={"page": page, "per_page": per_page},
+            params=params,
         )
 
-    async def get_run(self, project_id: int, run_id: int) -> dict[str, Any]:
+    async def get_run(
+        self,
+        run_id: int,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         Get details of a specific test run.
 
         Args:
-            project_id: The project ID.
             run_id: The test run ID.
+            expands: Related entities to include.
 
         Returns:
             Test run object with full details.
         """
+        params: dict[str, Any] = {}
+        if expands:
+            params["expands"] = ",".join(expands)
+
         result = await self._request(
-            "GET", f"/projects/{project_id}/runs/{run_id}"
+            "GET",
+            f"/runs/{run_id}",
+            params=params if params else None,
+        )
+        return result.get("result", result)
+
+    # =========================================================================
+    # Run Results
+    # =========================================================================
+
+    async def list_run_results(
+        self,
+        run_id: int,
+        status_id: str | None = None,
+        assignee_id: str | None = None,
+        created_by: str | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        get_latest_result: bool | None = None,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        List test results for a run with optional filters.
+
+        Args:
+            run_id: The test run ID.
+            status_id: Comma-separated status IDs to filter by.
+            assignee_id: Comma-separated assignee IDs to filter by.
+            created_by: Comma-separated user IDs who created results.
+            created_after: Filter results created after (ISO8601).
+            created_before: Filter results created before (ISO8601).
+            get_latest_result: If true, return only the latest result per test.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
+
+        Returns:
+            Paginated list of test results.
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if status_id:
+            params["status_id"] = status_id
+        if assignee_id:
+            params["assignee_id"] = assignee_id
+        if created_by:
+            params["created_by"] = created_by
+        if created_after:
+            params["created_after"] = created_after
+        if created_before:
+            params["created_before"] = created_before
+        if get_latest_result is not None:
+            params["get_latest_result"] = get_latest_result
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET",
+            f"/runs/{run_id}/results",
+            params=params,
+        )
+
+    # =========================================================================
+    # Case Attachments
+    # =========================================================================
+
+    async def list_case_attachments(
+        self,
+        case_id: int,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        List attachments for a test case.
+
+        Args:
+            case_id: The test case ID.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
+
+        Returns:
+            Paginated list of attachment objects.
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET",
+            f"/cases/{case_id}/attachments",
+            params=params,
+        )
+
+    async def upload_case_attachment(
+        self,
+        case_id: int,
+        filename: str,
+        content_base64: str,
+        content_type: str = "application/octet-stream",
+    ) -> dict[str, Any]:
+        """
+        Upload a single attachment to a test case.
+
+        Args:
+            case_id: The test case ID.
+            filename: Name of the file.
+            content_base64: Base64-encoded file content.
+            content_type: MIME type of the file.
+
+        Returns:
+            Created attachment object.
+
+        Raises:
+            TestmoAPIError: If the upload fails or the base64 content is invalid.
+        """
+        import base64
+        import binascii
+
+        # Validate and decode base64 content
+        try:
+            file_content = base64.b64decode(content_base64)
+        except binascii.Error as e:
+            raise TestmoAPIError(
+                400,
+                f"Invalid base64 content: {e}",
+                {"detail": "The content_base64 parameter must be valid base64-encoded data"},
+            )
+
+        # Use multipart form upload with error handling
+        try:
+            response = await self.client.post(
+                f"/cases/{case_id}/attachments/single",
+                files={"file": (filename, file_content, content_type)},
+            )
+        except httpx.TimeoutException:
+            raise TestmoAPIError(408, "Upload request timed out")
+        except httpx.ConnectError as e:
+            raise TestmoAPIError(0, f"Connection error during upload: {e}")
+
+        # Handle 204 No Content response
+        if response.status_code == 204:
+            return {"success": True}
+
+        if response.status_code >= 400:
+            try:
+                error_body = response.json()
+            except Exception:
+                error_body = response.text
+            raise TestmoAPIError(
+                response.status_code,
+                f"Upload failed: {response.reason_phrase}",
+                error_body,
+            )
+
+        result = response.json()
+        return result.get("result", result)
+
+    async def delete_case_attachments(
+        self,
+        case_id: int,
+        attachment_ids: list[int],
+    ) -> dict[str, Any]:
+        """
+        Delete one or more attachments from a test case.
+
+        Args:
+            case_id: The test case ID.
+            attachment_ids: List of attachment IDs to delete.
+
+        Returns:
+            Success status.
+        """
+        return await self._request(
+            "DELETE",
+            f"/cases/{case_id}/attachments",
+            data={"ids": attachment_ids},
+        )
+
+    # =========================================================================
+    # Automation Sources
+    # =========================================================================
+
+    async def list_automation_sources(
+        self,
+        project_id: int,
+        is_retired: bool | None = None,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        List automation sources in a project.
+
+        Args:
+            project_id: The project ID.
+            is_retired: Filter by retired status.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
+
+        Returns:
+            Paginated list of automation sources.
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if is_retired is not None:
+            params["is_retired"] = is_retired
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET",
+            f"/projects/{project_id}/automation/sources",
+            params=params,
+        )
+
+    async def get_automation_source(
+        self,
+        automation_source_id: int,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Get details of a specific automation source.
+
+        Args:
+            automation_source_id: The automation source ID.
+            expands: Related entities to include.
+
+        Returns:
+            Automation source object with full details.
+        """
+        params: dict[str, Any] = {}
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        result = await self._request(
+            "GET",
+            f"/automation/sources/{automation_source_id}",
+            params=params if params else None,
+        )
+        return result.get("result", result)
+
+    # =========================================================================
+    # Automation Runs
+    # =========================================================================
+
+    async def list_automation_runs(
+        self,
+        project_id: int,
+        source_id: str | None = None,
+        milestone_id: str | None = None,
+        status: str | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        tags: str | None = None,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        List automation runs in a project.
+
+        Args:
+            project_id: The project ID.
+            source_id: Comma-separated automation source IDs to filter by.
+            milestone_id: Comma-separated milestone IDs to filter by.
+            status: Comma-separated status values (2=Success, 3=Failure, 4=Running).
+            created_after: Filter runs created after (ISO8601).
+            created_before: Filter runs created before (ISO8601).
+            tags: Comma-separated tags to filter by.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
+
+        Returns:
+            Paginated list of automation runs.
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if source_id:
+            params["source_id"] = source_id
+        if milestone_id:
+            params["milestone_id"] = milestone_id
+        if status:
+            params["status"] = status
+        if created_after:
+            params["created_after"] = created_after
+        if created_before:
+            params["created_before"] = created_before
+        if tags:
+            params["tags"] = tags
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET",
+            f"/projects/{project_id}/automation/runs",
+            params=params,
+        )
+
+    async def get_automation_run(
+        self,
+        automation_run_id: int,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Get details of a specific automation run.
+
+        Args:
+            automation_run_id: The automation run ID.
+            expands: Related entities to include.
+
+        Returns:
+            Automation run object with full details.
+        """
+        params: dict[str, Any] = {}
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        result = await self._request(
+            "GET",
+            f"/automation/runs/{automation_run_id}",
+            params=params if params else None,
         )
         return result.get("result", result)
 

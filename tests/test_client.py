@@ -1,8 +1,7 @@
 """Tests for the Testmo client."""
 
 import pytest
-
-from mcp_testmo.client import TestmoClient, TestmoAPIError
+from mcp_testmo.client import TestmoAPIError, TestmoClient
 
 
 class TestTestmoClient:
