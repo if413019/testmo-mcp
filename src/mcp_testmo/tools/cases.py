@@ -29,8 +29,9 @@ from mcp_testmo.tools.base import register_tool
             },
             "per_page": {
                 "type": "integer",
-                "description": "Results per page (default: 100, max: 100)",
+                "description": "Results per page (default: 100, max: 100). Valid values: 25, 50, 100",
                 "default": 100,
+                "enum": [25, 50, 100],
             },
         },
         "required": ["project_id"],
@@ -302,7 +303,8 @@ async def batch_delete_cases(client: TestmoClient, args: dict[str, Any]) -> Any:
             },
             "per_page": {
                 "type": "integer",
-                "description": "Results per page (default: 100)",
+                "description": "Results per page (default: 100). Valid values: 25, 50, 100",
+                "enum": [25, 50, 100],
             },
         },
         "required": ["project_id"],
