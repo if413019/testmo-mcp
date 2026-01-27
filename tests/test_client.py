@@ -53,12 +53,11 @@ class TestTestmoClient:
 
         # Basic URL
         url = client.get_web_url(project_id=2)
-        assert url == "https://test.testmo.net/repository/2"
+        assert url == "https://test.testmo.net/repositories/2"
 
         # With folder ID
         url = client.get_web_url(project_id=2, resource_id=123)
-        assert url == "https://test.testmo.net/repository/2?group_id=123"
-
+        assert url == "https://test.testmo.net/repositories/2?group_id=123"
         # With different resource type
         url = client.get_web_url(project_id=2, resource_type="runs")
         assert url == "https://test.testmo.net/runs/2"

@@ -1057,7 +1057,7 @@ class TestmoClient:
     def get_web_url(
         self,
         project_id: int,
-        resource_type: str = "repository",
+        resource_type: str = "repositories",
         resource_id: int | None = None,
     ) -> str:
         """
@@ -1065,7 +1065,7 @@ class TestmoClient:
 
         Args:
             project_id: The project ID.
-            resource_type: Type of resource (repository, runs, etc.)
+            resource_type: Type of resource (repositories, runs, etc.)
             resource_id: Optional resource ID (folder ID, run ID, etc.)
 
         Returns:

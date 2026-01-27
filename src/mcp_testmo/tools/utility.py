@@ -45,8 +45,8 @@ async def get_field_mappings(args: dict[str, Any]) -> Any:
             },
             "resource_type": {
                 "type": "string",
-                "description": "Type of resource (repository, runs)",
-                "default": "repository",
+                "description": "Type of resource (repositories, runs)",
+                "default": "repositories",
             },
             "resource_id": {
                 "type": "integer",
@@ -61,7 +61,7 @@ async def get_web_url(client: TestmoClient, args: dict[str, Any]) -> Any:
     return {
         "url": client.get_web_url(
             args["project_id"],
-            args.get("resource_type", "repository"),
+            args.get("resource_type", "repositories"),
             args.get("resource_id"),
         )
     }
