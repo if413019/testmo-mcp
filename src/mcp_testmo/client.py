@@ -1051,6 +1051,75 @@ class TestmoClient:
         return result.get("result", result)
 
     # =========================================================================
+    # Issue Connections
+    # =========================================================================
+
+    async def list_issue_connections(
+        self,
+        project_id: int | None = None,
+        integration_type: str | None = None,
+        is_active: bool | None = None,
+        page: int = 1,
+        per_page: int = 100,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        List available issue integrations (GitHub, Jira, etc.).
+
+        Args:
+            project_id: Filter by project ID (optional).
+            integration_type: Filter by integration type (e.g., 'github', 'jira').
+            is_active: Filter by active status.
+            page: Page number.
+            per_page: Results per page.
+            expands: Related entities to include.
+
+        Returns:
+            Paginated list of issue connection objects.
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if project_id is not None:
+            params["project_id"] = project_id
+        if integration_type:
+            params["integration_type"] = integration_type
+        if is_active is not None:
+            params["is_active"] = is_active
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        return await self._request(
+            "GET",
+            "/issues/connections",
+            params=params,
+        )
+
+    async def get_issue_connection(
+        self,
+        connection_id: int,
+        expands: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Get details of a specific issue connection.
+
+        Args:
+            connection_id: The issue connection ID.
+            expands: Related entities to include.
+
+        Returns:
+            Issue connection object with full details.
+        """
+        params: dict[str, Any] = {}
+        if expands:
+            params["expands"] = ",".join(expands)
+
+        result = await self._request(
+            "GET",
+            f"/issues/connections/{connection_id}",
+            params=params if params else None,
+        )
+        return result.get("result", result)
+
+    # =========================================================================
     # Utility Methods
     # =========================================================================
 

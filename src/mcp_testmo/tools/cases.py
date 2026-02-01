@@ -120,7 +120,14 @@ Required fields:
 Optional fields:
 - template_id: 4=BDD/Gherkin (default), 1=Steps Table
 - state_id: 1=Draft (default), 2=Review, 3=Approved, 4=Active, 5=Deprecated
-- tags: Array of strings (domain, tier-type, scope tags)""",
+- tags: Array of strings (domain, tier-type, scope tags)
+- issues: Array of issue objects to link (see Issue Linking below)
+
+Issue Linking (Enhanced API - Jan 2026):
+Link external issues using flexible issue objects instead of internal IDs:
+- issues: [{"display_id": "PROJ-123", "integration_id": 1, "connection_project_id": "org/repo"}]
+
+Use testmo_list_issue_connections to discover integration_id and connection_project_id values.""",
     input_schema={
         "type": "object",
         "properties": {
@@ -191,7 +198,13 @@ async def batch_create_cases(client: TestmoClient, args: dict[str, Any]) -> Any:
 
 @register_tool(
     name="testmo_update_case",
-    description="Update an existing test case. Only include fields you want to change.",
+    description="""Update an existing test case. Only include fields you want to change.
+
+Issue Linking (Enhanced API - Jan 2026):
+Link external issues using flexible issue objects instead of internal IDs:
+- issues: [{"display_id": "PROJ-123", "integration_id": 1, "connection_project_id": "org/repo"}]
+
+Use testmo_list_issue_connections to discover integration_id and connection_project_id values.""",
     input_schema={
         "type": "object",
         "properties": {
