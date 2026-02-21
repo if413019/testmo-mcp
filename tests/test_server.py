@@ -76,6 +76,10 @@ class TestTools:
             # Utility
             "testmo_get_field_mappings",
             "testmo_get_web_url",
+            # Composite (recursive)
+            "testmo_get_folders_recursive",
+            "testmo_get_cases_recursive",
+            "testmo_search_cases_recursive",
         ]
 
         for expected_tool in expected:

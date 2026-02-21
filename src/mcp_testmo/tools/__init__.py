@@ -11,6 +11,7 @@ from mcp_testmo.tools import (
     automation_runs,
     automation_sources,
     cases,
+    composite,
     folders,
     issues,
     milestones,
@@ -28,6 +29,7 @@ __all__ = [
     "get_handler",
     "get_all_tool_names",
     # Tool modules
+    "composite",
     "projects",
     "folders",
     "milestones",
