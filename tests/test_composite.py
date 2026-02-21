@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from mcp_testmo.tools.composite import (
+    _apply_client_filters,
     _build_folder_map,
     _build_folder_tree,
     _collect_subtree,
@@ -319,3 +320,343 @@ class TestSearchCasesRecursive:
             client, {"project_id": 1, "folder_id": 999}
         )
         assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_contains_match_mode(self):
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            return {
+                "result": [
+                    make_case(1, "TC1", 4, custom_references="IUG-1169, IUG-1170"),
+                    make_case(2, "TC2", 4, custom_references="IUG-2000"),
+                    make_case(3, "TC3", 4, custom_references="iug-1169"),
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {
+                "project_id": 1,
+                "folder_id": 4,
+                "custom_filters": {"custom_references": "IUG-1169"},
+                "match_mode": "contains",
+            },
+        )
+
+        assert result["total_matches"] == 2
+        names = {c["name"] for c in result["cases"]}
+        assert names == {"TC1", "TC3"}
+
+    @pytest.mark.asyncio
+    async def test_array_filters_tags(self):
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            return {
+                "result": [
+                    make_case(1, "TC1", 4, tags=["regression", "smoke"]),
+                    make_case(2, "TC2", 4, tags=["smoke"]),
+                    make_case(3, "TC3", 4, tags=["regression", "e2e"]),
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {
+                "project_id": 1,
+                "folder_id": 4,
+                "array_filters": {"tags": ["regression"]},
+            },
+        )
+
+        assert result["total_matches"] == 2
+        names = {c["name"] for c in result["cases"]}
+        assert names == {"TC1", "TC3"}
+
+    @pytest.mark.asyncio
+    async def test_array_filters_configurations(self):
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            return {
+                "result": [
+                    make_case(1, "TC1", 4, configurations=[4, 5]),
+                    make_case(2, "TC2", 4, configurations=[10]),
+                    make_case(3, "TC3", 4, configurations=[5, 10]),
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {
+                "project_id": 1,
+                "folder_id": 4,
+                "array_filters": {"configurations": [5]},
+            },
+        )
+
+        assert result["total_matches"] == 2
+        names = {c["name"] for c in result["cases"]}
+        assert names == {"TC1", "TC3"}
+
+    @pytest.mark.asyncio
+    async def test_issue_key_filter(self):
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            return {
+                "result": [
+                    make_case(1, "TC1", 4, issues=[
+                        {"display_id": "IUG-1169", "integration_id": 1},
+                    ]),
+                    make_case(2, "TC2", 4, issues=[
+                        {"display_id": "IUG-2000", "integration_id": 1},
+                    ]),
+                    make_case(3, "TC3", 4, issues=[]),
+                    make_case(4, "TC4", 4),  # no issues field
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {
+                "project_id": 1,
+                "folder_id": 4,
+                "issue_key": "IUG-1169",
+            },
+        )
+
+        assert result["total_matches"] == 1
+        assert result["cases"][0]["name"] == "TC1"
+
+    @pytest.mark.asyncio
+    async def test_project_wide_search_no_folder_id(self):
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            # folder_id should be None for project-wide
+            assert folder_id is None
+            return {
+                "result": [
+                    make_case(1, "TC1", 1),
+                    make_case(2, "TC2", 2),
+                    make_case(3, "TC3", 5),
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {"project_id": 1, "query": "TC"},
+        )
+
+        assert result["total_matches"] == 3
+        # Should annotate with folder info from folder_map
+        assert result["cases"][0]["_folder_name"] == "Root A"
+        assert result["cases"][1]["_folder_name"] == "Child A1"
+        assert result["cases"][2]["_folder_name"] == "Root B"
+        # Folder summary should have 3 entries
+        assert len(result["folder_summary"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_combined_filters(self):
+        """Test custom_filters + array_filters + issue_key together."""
+        client = _mock_client()
+
+        async def mock_search(
+            project_id: int,
+            query: str | None = None,
+            folder_id: int | None = None,
+            tags: list[str] | None = None,
+            state_id: int | None = None,
+            page: int = 1,
+            per_page: int = 100,
+        ) -> dict:
+            return {
+                "result": [
+                    make_case(
+                        1, "Match all", 4,
+                        custom_priority=1,
+                        tags=["regression"],
+                        issues=[{"display_id": "IUG-100"}],
+                    ),
+                    make_case(
+                        2, "Wrong priority", 4,
+                        custom_priority=3,
+                        tags=["regression"],
+                        issues=[{"display_id": "IUG-100"}],
+                    ),
+                    make_case(
+                        3, "Wrong tag", 4,
+                        custom_priority=1,
+                        tags=["smoke"],
+                        issues=[{"display_id": "IUG-100"}],
+                    ),
+                    make_case(
+                        4, "Wrong issue", 4,
+                        custom_priority=1,
+                        tags=["regression"],
+                        issues=[{"display_id": "IUG-999"}],
+                    ),
+                ],
+                "next_page": None,
+            }
+
+        client.search_cases = AsyncMock(side_effect=mock_search)
+
+        result = await search_cases_recursive(
+            client,
+            {
+                "project_id": 1,
+                "folder_id": 4,
+                "custom_filters": {"custom_priority": 1},
+                "array_filters": {"tags": ["regression"]},
+                "issue_key": "IUG-100",
+            },
+        )
+
+        assert result["total_matches"] == 1
+        assert result["cases"][0]["name"] == "Match all"
+
+
+class TestApplyClientFilters:
+    """Unit tests for _apply_client_filters in isolation."""
+
+    def test_exact_match_default(self):
+        cases = [
+            {"name": "A", "custom_priority": 1},
+            {"name": "B", "custom_priority": 3},
+        ]
+        result = _apply_client_filters(
+            cases, {"custom_priority": 1}, "exact", None, None
+        )
+        assert len(result) == 1
+        assert result[0]["name"] == "A"
+
+    def test_contains_match_substring(self):
+        cases = [
+            {"name": "A", "custom_references": "IUG-1169, IUG-1170"},
+            {"name": "B", "custom_references": "IUG-2000"},
+        ]
+        result = _apply_client_filters(
+            cases, {"custom_references": "IUG-1169"}, "contains", None, None
+        )
+        assert len(result) == 1
+        assert result[0]["name"] == "A"
+
+    def test_contains_case_insensitive(self):
+        cases = [{"name": "A", "custom_feature": "Login Feature Test"}]
+        result = _apply_client_filters(
+            cases, {"custom_feature": "login feature"}, "contains", None, None
+        )
+        assert len(result) == 1
+
+    def test_contains_non_string_filter_still_exact(self):
+        cases = [
+            {"name": "A", "custom_priority": 1},
+            {"name": "B", "custom_priority": 2},
+        ]
+        result = _apply_client_filters(
+            cases, {"custom_priority": 1}, "contains", None, None
+        )
+        assert len(result) == 1
+        assert result[0]["name"] == "A"
+
+    def test_array_filters_any_match(self):
+        cases = [
+            {"name": "A", "tags": ["regression", "smoke"]},
+            {"name": "B", "tags": ["e2e"]},
+        ]
+        result = _apply_client_filters(
+            cases, None, "exact", {"tags": ["regression", "e2e"]}, None
+        )
+        assert len(result) == 2
+
+    def test_array_filters_no_match(self):
+        cases = [{"name": "A", "tags": ["smoke"]}]
+        result = _apply_client_filters(
+            cases, None, "exact", {"tags": ["regression"]}, None
+        )
+        assert len(result) == 0
+
+    def test_array_filters_missing_field(self):
+        cases = [{"name": "A"}]
+        result = _apply_client_filters(
+            cases, None, "exact", {"tags": ["regression"]}, None
+        )
+        assert len(result) == 0
+
+    def test_issue_key_match(self):
+        cases = [
+            {"name": "A", "issues": [{"display_id": "IUG-100"}]},
+            {"name": "B", "issues": [{"display_id": "IUG-200"}]},
+            {"name": "C", "issues": []},
+        ]
+        result = _apply_client_filters(cases, None, "exact", None, "IUG-100")
+        assert len(result) == 1
+        assert result[0]["name"] == "A"
+
+    def test_issue_key_no_issues_field(self):
+        cases = [{"name": "A"}]
+        result = _apply_client_filters(cases, None, "exact", None, "IUG-100")
+        assert len(result) == 0
+
+    def test_no_filters_returns_all(self):
+        cases = [{"name": "A"}, {"name": "B"}]
+        result = _apply_client_filters(cases, None, "exact", None, None)
+        assert len(result) == 2
